@@ -97,7 +97,7 @@ for i,file in enumerate(files[con_point:]):
         f.setncattr_string('sensor', sensor)
         f.setncattr_string('data time', day)
         f.setncattr_string('data create time', datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S'))
-        f.setncattr_string('projection mode', 'polar projection')
+        f.setncattr_string('projection mode', 'polar stereographic projection')
         f.setncattr_string('resolution', '25KM')
         f.setncattr_string('data processing organization', 'Ocean University Of China')
 
@@ -105,16 +105,18 @@ for i,file in enumerate(files[con_point:]):
         icecon_north[:] = grid_array_sub
         icecon_north.setncattr_string('Dataset Name', 'Daily Sea ice concentration')
         icecon_north.setncattr_string('Datatype', 'int')
-        # icecon_north.setncattr_string('valid_range','0-100,110,120')
+        icecon_north.setncattr_string('valid_range','0-100,110')
         icecon_north.setncattr_string('units', '%')
         icecon_north.setncattr_string('observation area', 'North of 60 N')
         icecon_north.setncattr_string('origin data product', 'MWRI_L2_SIC')
 
-        lat = f.createVariable('lat', 'f4', dimensions=('x', 'y'))
-        lon = f.createVariable('lon', 'f4', dimensions=('x', 'y'))
+        lat = f.createVariable('latitude', 'f4', dimensions=('x', 'y'))
+        lon = f.createVariable('longitude', 'f4', dimensions=('x', 'y'))
         # 添加Variable属性
         lon[:] = x_map_sub
         lat[:] = y_map_sub
+
+
     print(str(con_point + i+1) + '\\' + str(len(files)))
     print(satellite +'_'+ sensor +'_'+ day)
 

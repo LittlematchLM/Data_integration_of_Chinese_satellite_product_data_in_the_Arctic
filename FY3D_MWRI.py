@@ -94,7 +94,7 @@ for i,file in enumerate(files[con_point:]):
         f.setncattr_string('sensor', sensor)
         f.setncattr_string('data time', day)
         f.setncattr_string('data create time', datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S'))
-        f.setncattr_string('projection mode', 'polar projection')
+        f.setncattr_string('projection mode', 'polar stereographic projection')
         f.setncattr_string('resolution', '25KM')
         f.setncattr_string('data processing organization', 'Ocean University Of China')
 

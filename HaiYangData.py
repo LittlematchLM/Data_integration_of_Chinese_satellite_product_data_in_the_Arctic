@@ -163,7 +163,7 @@ class HaiYangData(RSData):
         return zeros_grid
 
     # 交叉点平均化
-    def coincident_point_mean(self,dataframe,value):
+    def coincident_point_mean(self,dataframe,value, get_count=False):
         num_grid = self.get_zeros_grid(self.nlat, self.nlon)
         grid_array = self.get_nan_grid(self.nlat, self.nlon)
         for index in dataframe.index:
@@ -176,6 +176,8 @@ class HaiYangData(RSData):
                 grid_array[x][y] += dataframe[value][index]
                 num_grid[x][y] += 1
         grid_array = grid_array / num_grid
+        if get_count:
+            return grid_array, num_grid
         return grid_array
 
     # 获取最大值
