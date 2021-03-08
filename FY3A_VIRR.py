@@ -53,7 +53,7 @@ crs2 = CRS(proj="aeqd")
 
 transformer = HaiYangData.set_transformer(crs,crs2)
 transformer_back = HaiYangData.set_transformer(crs2,crs)
-test_list = [file_list[3][11:17]]
+test_list = [file_list[3][50:-36]]
 
 
 for i,files in enumerate(test_list[con_point:]):
@@ -74,16 +74,19 @@ for i,files in enumerate(test_list[con_point:]):
             right_bottom_lon = fh.getncattr('Right-Bottom Longitude')
             sst = fh.variables['VIRR_SST'][:]
 
-        if left_top_lon < 0 :
-            left_top_lon += 360
-        if right_top_lon < 0:
-            right_top_lon += 360
-        if left_bottom_lon < 0:
-            left_bottom_lon += 360
-        if right_bottom_lon < 0:
-            right_bottom_lon += 360
-            
-        lats, lons = np.mgrid[ left_top_lat:left_bottom_lat:1000j,left_top_lon:right_top_lon:1000j]
+        # if left_top_lon < 0 and right_top_lon == 0:
+        #     left_top_lon += 360
+        #     right_top_lon += 360
+        #
+        #
+        # if right_top_lon < 0:
+        #     right_top_lon += 360
+        # if left_bottom_lon < 0:
+        #     left_bottom_lon += 360
+        # if right_bottom_lon < 0:
+        #     right_bottom_lon += 360
+
+        lats, lons = np.mgrid[left_top_lat:left_bottom_lat:1000j,left_top_lon:right_top_lon:1000j]
 
         # projlats, projlons = transformer.transform(lats, lons)
 
@@ -94,38 +97,36 @@ for i,files in enumerate(test_list[con_point:]):
         value_array[:,:,2],value_array[:,:,3] = transformer.transform(value_array[:,:,0], value_array[:,:,1])
         value_array[:,:,4] = sst
 
+        # invaild_value_index = np.argwhere(value_array < -500)
+        # value_array[invaild_value_index[:, 0], invaild_value_index[:, 1],2] = 0
 
         x = (value_array[:,:,2] / fy_virr.resolution).astype(np.int)
         y = (value_array[:,:,3] / fy_virr.resolution).astype(np.int)
-
-        grid_array[y,x] += value_array[:,:,4]
-        grid_num_array[y,x] += 1
+        grid_array[y,x] = value_array[:,:,4]
+        # grid_num_array[y,x] += 1
 # 获得XYmgrid
-        grid_array = grid_array / grid_num_array
-
+#         grid_array = grid_array / grid_num_array
         print(file)
 
             # x_map += 150
-
 # 将非法点置为np.nan
-    grid_array[grid_array<-100] = np.nan
+        grid_array[grid_array<-20] = np.nan
 
     x_map, y_map = fy_virr.get_map_grid(transformer_back)
     plt.figure(figsize=(16, 9))
     hy_m = Basemap(projection='npaeqd', boundinglat=50, lon_0=0, resolution='c')
     hy_m.pcolormesh(x_map, y_map, data=grid_array, cmap=plt.cm.jet,vmin=0,vmax=300,latlon = True)
+    # hy_m.pcolormesh(x_map, y_map, data=grid_array,latlon = True)
     hy_m.colorbar(location='right')
     # hy_m.fillcontinents()
     hy_m.drawmapboundary()
     hy_m.drawparallels(np.arange(-90., 120., 10.), labels=[1, 0, 0, 0])
     hy_m.drawmeridians(np.arange(-180., 180., 60.), labels=[0, 0, 0, 1])
-    plt.title(satellite +'_'+ sensor +'_'+ day)
+    plt.title(file+satellite +'_'+ sensor +'_'+ day)
     plt.show()
-
 
     plt.savefig(save_path +r'pic//'+ file_name + '.jpg')
     plt.close()
-
 
     with Dataset(save_path + file_name + '.nc', 'w', format='NETCDF4') as file:
         file.createDimension('x', grid_array.shape[0])
