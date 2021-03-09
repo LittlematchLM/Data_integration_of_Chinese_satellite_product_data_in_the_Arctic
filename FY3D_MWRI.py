@@ -107,8 +107,8 @@ for i,file in enumerate(files[con_point:]):
         icecon_north.setncattr_string('observation area', 'North of 60 N')
         icecon_north.setncattr_string('origin data product', 'MWRI_L2_SIC')
 
-        lat = f.createVariable('lat', 'f4', dimensions=('x', 'y'))
-        lon = f.createVariable('lon', 'f4', dimensions=('x', 'y'))
+        lat = f.createVariable('latitude', 'f4', dimensions=('x', 'y'))
+        lon = f.createVariable('longitude', 'f4', dimensions=('x', 'y'))
         # 添加Variable属性
         lon[:] = x_map_sub
         lat[:] = y_map_sub

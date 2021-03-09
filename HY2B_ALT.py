@@ -184,8 +184,8 @@ for i,files in enumerate(file_list):
         swh_north.setncattr_string('observation area', 'North of 60 N')
         swh_north.setncattr_string('origin data product', 'H2B_OPER_GDR_2PC')
 
-        lat = f.createVariable('lat', 'f4', dimensions=('x', 'y'))
-        lon = f.createVariable('lon', 'f4', dimensions=('x', 'y'))
+        lat = f.createVariable('latitude', 'f4', dimensions=('x', 'y'))
+        lon = f.createVariable('longitude', 'f4', dimensions=('x', 'y'))
         lon[:] = hy_x_map_sub
         lat[:] = hy_y_map_sub
         count_g = f.createVariable('count_grid', 'i4', dimensions=('x', 'y'))
