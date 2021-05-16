@@ -7,6 +7,8 @@ import datetime
 
 satellite = r'FY3A'
 sensor = r'VIRR'
+parameter = r'SST'
+resolution = r'25KM'
 fyfiles = glob.glob(r'H:\sst\FY-3A\*\*\*.HDF')
 fyfiles.sort()
 save_path = r'H:\\polor_project\\output_new\\sst\\FY3A_VIRR\\'
@@ -36,13 +38,13 @@ for i in range(len(fyfiles)):
         list.append(fyfiles[i])
 file_list.append(list)
 
-'''for files in file_list:
+for files in file_list:
     for file in files:
         try:
             if re.match('50', file.split('_')[2]).span()==(0,2):
                 os.remove(file)
         except AttributeError:
-            continue'''
+            continue
 
 # 如果运行中断，从哪个文件开始继续运行
 con_point = 0
@@ -71,7 +73,7 @@ for i,files in enumerate(file_list[::30][:12][con_point:]):
     grid_array = np.full((fy_virr.nlat, fy_virr.nlon),fill_value=np.nan)
     grid_num_array = np.zeros((fy_virr.nlat, fy_virr.nlon))
     day = files[0].split('//')[-1].split(r'_')[7]
-    file_name = satellite + '_' + sensor + '_' + day
+    file_name = satellite + '_' + sensor + parameter + resolution + '_' + day
     for file in files:
         with Dataset(file, mode='r') as fh:
             left_top_lat = fh.getncattr('Left-Top Latitude')
@@ -92,7 +94,7 @@ for i,files in enumerate(file_list[::30][:12][con_point:]):
         value_array[:,:,0] = lats
         value_array[:,:,1] = lons
         value_array[:,:,2],value_array[:,:,3] = transformer.transform(value_array[:,:,0], value_array[:,:,1])
-        value_array[:,:,4] = sst
+        value_array[:,:,4] = sst-273.15
 
         x = (value_array[:,:,2] / fy_virr.resolution).astype(np.int)
         y = (value_array[:,:,3] / fy_virr.resolution).astype(np.int)
@@ -108,7 +110,7 @@ for i,files in enumerate(file_list[::30][:12][con_point:]):
     x_map, y_map = fy_virr.get_map_grid(transformer_back)
     plt.figure(figsize=(16, 9))
     hy_m = Basemap(projection='npaeqd', boundinglat=60, lon_0=0, resolution='c')
-    hy_m.pcolormesh(x_map, y_map, data=grid_array, cmap=plt.cm.jet,vmin=-20,vmax=350,latlon = True)
+    hy_m.pcolormesh(x_map, y_map, data=grid_array, cmap=plt.cm.jet,vmin=0,vmax=30,latlon = True)
     hy_m.colorbar(location='right')
     hy_m.fillcontinents()
     hy_m.drawmapboundary()

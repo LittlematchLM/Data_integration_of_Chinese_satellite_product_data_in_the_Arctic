@@ -5,6 +5,9 @@ import datetime
 
 satellite = r'HY2B'
 sensor = r'ALT'
+value_swh = r'SWH'
+value_ssh = r'SSH'
+resolution_n = r'25KM'
 hyfiles = glob.glob(r'H:\HY-2B\ALT\*\*\*.nc')
 hyfiles.sort()
 save_path_swh = r'H:\\polor_project\\output_new\\swh\\HY-2B\\'
@@ -45,7 +48,8 @@ transformer_back = HaiYangData.set_transformer(crs2,crs)
 file_list = file_list[-3:-1]
 for i,files in enumerate(file_list):
     day =files[0].split('\\')[-1].split('_')[-2].split('T')[0]
-    file_name = satellite + '_' + sensor + '_' + day
+    file_name_t = satellite + '_' + sensor+'_' + value_ssh + '_' +resolution_n+'_'+ day
+
     hy_ori_df = pd.DataFrame(np.column_stack((hy_alt.alt_from_nc_files(files = files, value=hy_value))), columns=['lon', 'lat', 'time']+hy_value)
 
     # 删除无效点,只处理北纬66°以上的数据
@@ -78,31 +82,7 @@ for i,files in enumerate(file_list):
     hy_m.drawparallels(np.arange(-90., 120., 10.), labels=[1, 0, 0, 0])
     hy_m.drawmeridians(np.arange(-180., 180., 60.), labels=[0, 0, 0, 1])
     plt.title(satellite +'_'+ sensor +'_'+ day)
-    plt.savefig(save_path_swh + r'pic\\' + file_name + '.jpg')
-    plt.close()
-
-    plt.figure(figsize=(16, 9))
-    hy_m = Basemap(projection='npaeqd', boundinglat=66, lon_0=0, resolution='c')
-    hy_m.pcolormesh(hy_x_map, hy_y_map, data=max_grid, cmap=plt.cm.jet,vmin=0, vmax=5,latlon = True)
-    hy_m.colorbar(location='right')
-    hy_m.fillcontinents()
-    hy_m.drawmapboundary()
-    hy_m.drawparallels(np.arange(-90., 120., 10.), labels=[1, 0, 0, 0])
-    hy_m.drawmeridians(np.arange(-180., 180., 60.), labels=[0, 0, 0, 1])
-    plt.title(satellite +'_'+ sensor +'_'+ day + 'max')
-    plt.savefig(save_path_swh + r'pic\\' + file_name+ 'max' + '.jpg')
-    plt.close()
-
-    plt.figure(figsize=(16, 9))
-    hy_m = Basemap(projection='npaeqd', boundinglat=66, lon_0=0, resolution='c')
-    hy_m.pcolormesh(hy_x_map, hy_y_map, data=min_grid, cmap=plt.cm.jet,vmin=0, vmax=5,latlon = True)
-    hy_m.colorbar(location='right')
-    hy_m.fillcontinents()
-    hy_m.drawmapboundary()
-    hy_m.drawparallels(np.arange(-90., 120., 10.), labels=[1, 0, 0, 0])
-    hy_m.drawmeridians(np.arange(-180., 180., 60.), labels=[0, 0, 0, 1])
-    plt.title(satellite +'_'+ sensor +'_'+ day + 'min')
-    plt.savefig(save_path_swh + r'pic\\' + file_name+ 'min' + '.jpg')
+    plt.savefig(save_path_swh + r'pic\\' + file_name_t + '.jpg')
     plt.close()
 
     mean_grid_sub = np.hstack((mean_grid[:700,:600],mean_grid[:700,1200:]))
@@ -110,7 +90,7 @@ for i,files in enumerate(file_list):
     hy_y_map_sub = np.hstack((hy_y_map[:700,: 600], hy_y_map[:700, 1200:]))
     count_grid = np.hstack((count_grid[:700, : 600], count_grid[:700, 1200:]))
 
-    with Dataset(save_path_swh  + file_name + '.h5', 'w') as file:
+    with Dataset(save_path_swh  + satellite + '_' + sensor+'_' + value_swh + '_' +resolution_n+'_'+ day + '.h5', 'w') as file:
         file.createDimension('x', mean_grid_sub.shape[0])
         file.createDimension('y', mean_grid_sub.shape[1])
         # 添加数据属性
@@ -133,7 +113,7 @@ for i,files in enumerate(file_list):
         swh_north.setncattr_string('units', 'm')
         swh_north.setncattr_string('observation area', 'North of 60 N')
         swh_north.setncattr_string('origin data product', 'H2B_OPER_GDR_2PC')
-        count_g = f.createVariable('count_grid', 'i4', dimensions=('x', 'y'))
+        count_g = file.createVariable('count_grid', 'i4', dimensions=('x', 'y'))
         count_g[:] = count_grid
 
         lon[:] = hy_x_map_sub
@@ -154,7 +134,7 @@ for i,files in enumerate(file_list):
     hy_m.drawparallels(np.arange(-90., 120., 10.), labels=[1, 0, 0, 0])
     hy_m.drawmeridians(np.arange(-180., 180., 60.), labels=[0, 0, 0, 1])
     plt.title(satellite +'_'+ sensor +'_'+ day)
-    plt.savefig(save_path_ssh + r'pic\\' + file_name + '.jpg')
+    plt.savefig(save_path_ssh + r'pic\\' + file_name_t + '.jpg')
     plt.close()
 
 
@@ -162,7 +142,7 @@ for i,files in enumerate(file_list):
     hy_x_map_sub = np.hstack((hy_x_map[:700,: 600],hy_x_map[:700, 1200:]))
     hy_y_map_sub = np.hstack((hy_y_map[:700,: 600], hy_y_map[:700, 1200:]))
     count_grid = np.hstack((count_grid[:700, : 600], count_grid[:700, 1200:]))
-    with Dataset(save_path_ssh  + file_name + '.h5', 'w') as f:
+    with Dataset(save_path_ssh  + satellite + '_' + sensor+'_' + value_ssh + '_' +resolution_n+'_'+ day + '.h5', 'w') as f:
         f.createDimension('x', mean_grid_sub.shape[0])
         f.createDimension('y', mean_grid_sub.shape[1])
         # 添加数据属性
@@ -179,7 +159,7 @@ for i,files in enumerate(file_list):
         swh_north[:] = mean_grid_sub
         swh_north.setncattr_string('Dataset Name', 'Mean Sea Surface Height')
         swh_north.setncattr_string('Datatype', 'float')
-        swh_north.setncattr_string('valid_range','0.5-20')
+        # swh_north.setncattr_string('valid_range','0.5-20')
         swh_north.setncattr_string('units', 'm')
         swh_north.setncattr_string('observation area', 'North of 60 N')
         swh_north.setncattr_string('origin data product', 'H2B_OPER_GDR_2PC')
