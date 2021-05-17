@@ -10,8 +10,8 @@ sensor = r'SCA'
 value = r'wind'
 resolution_n = r'25KM'
 # save_path =
-files = glob.glob(r"h:\\wind\\SCA\\*\\*\\*.h5")
-files = files[6:7]
+files = glob.glob(r"g:\\wind\\SCA\\*\\*\\*_dps_250_10_owv.h5")
+# files = files[6:7]
 
 
 hy_sca = HaiYangData(satellite=satellite, sensor=sensor,resolution=35000)
@@ -42,30 +42,38 @@ for i in range(len(files)):
         list.append(files[i])
 file_list.append(list)
 
-for files in file_list:
+for files in file_list[:1]:
     grid_array = np.zeros((hy_sca.nlat, hy_sca.nlon))
     grid_num_array = np.zeros((hy_sca.nlat, hy_sca.nlon))
+    grid_array_dir = np.zeros((hy_sca.nlat, hy_sca.nlon))
+    grid_num_array_dir = np.zeros((hy_sca.nlat, hy_sca.nlon))
 
     for file in files:
-        with Dataset(files[0], mode='r') as f:
+        with Dataset(file, mode='r') as f:
             date = f.getncattr('Equator_Crossing_Time').split('T')[0]
-            lats = f.variables['wvc_lat'][:,2:-2]
-            lons = f.variables['wvc_lon'][:,2:-2]
+            lats = f.variables['wvc_lat'][:]
+            lons = f.variables['wvc_lon'][:]
             # time = f.variables['time'][:]
-            wind_speed = f.variables['wind_speed_selection'][:,2:-2]
-            wind_dir = f.variables['wind_dir_selection'][:,2:-2]
+            wind_speed = f.variables['wind_speed_selection'][:]
+            wind_dir = f.variables['wind_dir_selection'][:]
 
 # lats[lats > 90] = 100
 
 # projlats, projlons = transformer.transform(lats, lons)
-    value_array = np.empty(shape=(lons.shape[0], lons.shape[1], 6))
+        value_array = np.empty(shape=(lons.shape[0], lons.shape[1], 6))
+        lats[lats < -361] = 0
+        lons[lons < -361] = 0
+        lats[lats > 361] = 0
+        lons[lons > 361] = 0
+        value_array[:, :, 0] = lats
+        value_array[:, :, 1] = lons
+        value_array[:, :, 2], value_array[:, :, 3] = transformer.transform(value_array[:, :, 0], value_array[:, :, 1])
+        value_array[:, :, 4] = wind_speed
+        value_array[:, :, 5] = wind_dir
 
 
-    value_array[:, :, 0] = lats
-    value_array[:, :, 1] = lons
-    value_array[:, :, 2], value_array[:, :, 3] = transformer.transform(value_array[:, :, 0], value_array[:, :, 1])
-    value_array[:, :, 4] = wind_speed
-    value_array[:, :, 5] = wind_dir
+        print('lat max:%d, lon max: %d'%(lats.max(),lons.max()))
+        print('lat min:%d, lon min: %d' % (lats.min(), lons.min()))
 
 
 # value_array[:, :, 2][value_array[:, :, 4] < 0 ] = 0
@@ -75,41 +83,62 @@ for files in file_list:
 # value_array[:, :, 3][value_array[:, :, 5] < 0 ] = 0
 
 
-x = (value_array[:, :, 2] / hy_sca.resolution).astype(np.int)
-y = (value_array[:, :, 3] / hy_sca.resolution).astype(np.int)
+        x = (value_array[:, :, 2] / hy_sca.resolution).astype(np.int)
+        y = (value_array[:, :, 3] / hy_sca.resolution).astype(np.int)
 
 
-grid_array[y, x] += value_array[:, :, 4]
-grid_num_array[y, x] += 1
+        grid_array[y, x] += value_array[:, :, 4]
+        grid_num_array[y, x] += 1
+
+        grid_array_dir[y, x] += value_array[:, :, 5]
+        grid_num_array_dir[y, x] += 1
+        # print(grid_num_array.max())
+        # print(grid_num_array_dir.max())
 
 
 
 # 获得XYmgrid
 grid_array[grid_array < 0 ]=np.nan
-
+grid_array_dir[grid_array_dir < -360.] = np.nan
 
 grid_array = grid_array / grid_num_array
-# grid_array_dir = grid_array_dir / grid_num_array_dir
+grid_array_dir = grid_array_dir / grid_num_array_dir
 
+grid_array_dir[np.where(np.isnan(grid_array_dir))] =0
 
 x_map, y_map = hy_sca.get_map_grid(transformer_back)
 
-uwind = np.sin(np.radians(wind_dir)) * wind_speed
+'''uwind = np.sin(np.radians(wind_dir)) * wind_speed
 vwind = np.cos(np.radians(wind_dir)) * wind_speed
 
+# 专门用来画图的uwind和vwind
+wind_speed_one = np.full(shape=(wind_speed.shape),fill_value=10)
+uwind_draw = np.sin(np.radians(wind_dir)) * wind_speed_one
+vwind_draw = np.cos(np.radians(wind_dir)) * wind_speed_one'''
+
+uwind = np.sin(np.radians(grid_array)) * grid_array_dir
+vwind = np.cos(np.radians(grid_array)) * grid_array_dir
+
+# 专门用来画图的uwind和vwind
+grid_array_dir_one = np.full(shape=(grid_array_dir.shape),fill_value=10)
+uwind_draw = np.sin(np.radians(grid_array)) * grid_array_dir_one
+vwind_draw = np.cos(np.radians(grid_array)) * grid_array_dir_one
+
+
+uwind_draw[np.where(np.isnan(uwind_draw))] =0
+vwind_draw[np.where(np.isnan(vwind_draw))] =0
 
 
 plt.figure(figsize=(9, 9))
-hy_m = Basemap(projection='npaeqd', boundinglat=60, lon_0=0, resolution='c')
+hy_m = Basemap(projection='npaeqd', boundinglat=40, lon_0=0, resolution='c')
 # 用原始的lons，lats画图
 # hy_m.pcolormesh(lons, lats, data=wind_speed, cmap=plt.cm.jet,vmax = 24 ,vmin=0,latlon = True)
-# hy_m.quiver(lons[::10,::10], lats[::10,::10], uwind[::10,::10],vwind[::10,::10], units='width',scale_units='width',color='black',latlon = True)
+# hy_m.quiver(lons[::10,::10], lats[::10,::10], uwind_draw[::10,::10],vwind_draw[::10,::10], units='width',scale_units='width',color='black',latlon = True)
 # 用投影出来的grid画图
 hy_m.pcolormesh(x_map, y_map, data=grid_array, cmap=plt.cm.jet,vmax = 24 ,vmin=0,latlon = True)
-hy_m.quiver(x_map, y_map, uwind[::10,::10],vwind[::10,::10], units='width',scale_units='width',color='black',latlon = True)
+hy_m.quiver(x_map[::10,::10], y_map[::10,::10], uwind_draw[::10,::10],vwind_draw[::10,::10], units='width',scale_units='width',color='red',latlon = True)
 hy_m.colorbar(location='right')
 hy_m.fillcontinents()
-
 hy_m.drawmapboundary()
 hy_m.drawparallels(np.arange(-90., 120., 10.), labels=[1, 0, 0, 0])
 hy_m.drawmeridians(np.arange(-180., 180., 60.), labels=[0, 0, 0, 1])

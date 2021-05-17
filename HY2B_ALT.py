@@ -8,10 +8,10 @@ sensor = r'ALT'
 value_swh = r'SWH'
 value_ssh = r'SSH'
 resolution_n = r'25KM'
-hyfiles = glob.glob(r'H:\HY-2B\ALT\*\*\*.nc')
+hyfiles = glob.glob(r'g:\HY-2B\ALT\*\*\*.nc')
 hyfiles.sort()
-save_path_swh = r'H:\\polor_project\\output_new\\swh\\HY-2B\\'
-save_path_ssh = r'H:\\polor_project\\output_new\\ssh\\HY-2B\\'
+save_path_swh = r'g:\\polor_project\\output_all\\swh\\HY-2B\\'
+save_path_ssh = r'g:\\polor_project\\output_all\\ssh\\HY-2B\\'
 hy_value = ['swh_ku','swh_c','mean_sea_surface','rain_flag','ice_flag','surface_type']
 hy_alt = HaiYangData(satellite=satellite, sensor=sensor,resolution=25000)
 
@@ -31,8 +31,6 @@ for i in range(len(hyfiles)):
         list.append(hyfiles[i])
 file_list.append(list)
 
-# file_list = file_list[1:2]
-file_list = file_list[::30]
 
 # 将WGS 84坐标（4326）转化为极射投影
 crs = CRS.from_epsg(4326)
@@ -45,7 +43,6 @@ transformer = HaiYangData.set_transformer(crs,crs2)
 transformer_back = HaiYangData.set_transformer(crs2,crs)
 
 
-file_list = file_list[-3:-1]
 for i,files in enumerate(file_list):
     day =files[0].split('\\')[-1].split('_')[-2].split('T')[0]
     file_name_t = satellite + '_' + sensor+'_' + value_ssh + '_' +resolution_n+'_'+ day
@@ -159,7 +156,7 @@ for i,files in enumerate(file_list):
         swh_north[:] = mean_grid_sub
         swh_north.setncattr_string('Dataset Name', 'Mean Sea Surface Height')
         swh_north.setncattr_string('Datatype', 'float')
-        # swh_north.setncattr_string('valid_range','0.5-20')
+        swh_north.setncattr_string('valid_range','0.5-20')
         swh_north.setncattr_string('units', 'm')
         swh_north.setncattr_string('observation area', 'North of 60 N')
         swh_north.setncattr_string('origin data product', 'H2B_OPER_GDR_2PC')

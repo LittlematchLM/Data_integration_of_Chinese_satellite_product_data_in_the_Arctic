@@ -2,18 +2,16 @@ from RSData import *
 from HaiYangData import *
 import glob
 import os
+import datetime
 
 satellite = r'FY3B'
 sensor = r'MWRI'
 files = glob.glob(r'G:\icecon\micosoft\FY-3B\*\*.HDF')
 files.sort()
 latlon_file = r'E:\python_workfile\polar_project\FY3C_MWRI\lat_lon.h5'
-save_path = r'G:\\polor_project\\output_new\\micosoft_save\\FY-3B\\'
+save_path = r'G:\\polor_project\\output_all\\micosoft_save\\FY-3B\\'
 # 如果运行中断，从哪个文件开始继续运行
-con_point = 12
-# files = files[30:31]
-files = files[:540]
-files = files[::30]
+con_point = 0
 try:
     os.mkdir(save_path + 'pic')
 except :
@@ -87,8 +85,26 @@ for i,file in enumerate(files[con_point:]):
     with Dataset(save_path + file_name + '.nc', 'w', format='NETCDF4') as f:
         f.createDimension('x', grid_array_sub.shape[0])
         f.createDimension('y', grid_array_sub.shape[1])
-        icecon_north = f.createVariable('icecon_north', 'i4', dimensions=('x', 'y'))
+        f.setncattr_string('satellite',satellite)
+        f.setncattr_string('sensor', sensor)
+        f.setncattr_string('data time', day)
+        f.setncattr_string('data create time', datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S'))
+        f.setncattr_string('projection mode', 'polar stereographic projection')
+        f.setncattr_string('resolution', '25KM')
+        f.setncattr_string('data processing organization', 'Ocean University Of China')
+
+        icecon_north = f.createVariable('SIC', 'i4', dimensions=('x', 'y'))
         icecon_north[:] = grid_array_sub
+        icecon_north.setncattr_string('Dataset Name', 'Daily Sea ice concentration')
+        icecon_north.setncattr_string('Datatype', 'int')
+        icecon_north.setncattr_string('valid_range','0-100')
+        icecon_north.setncattr_string('units', '%')
+        icecon_north.setncattr_string('observation area', 'North of 60 N')
+        icecon_north.setncattr_string('origin data product', 'MWRI_L2_SIC')
+
+
+
+
         lat = f.createVariable('lat', 'f4', dimensions=('x', 'y'))
         lon = f.createVariable('lon', 'f4', dimensions=('x', 'y'))
         lon[:] = x_map_sub
