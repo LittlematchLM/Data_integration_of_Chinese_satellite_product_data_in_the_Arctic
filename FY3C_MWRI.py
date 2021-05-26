@@ -13,7 +13,7 @@ files.sort()
 latlon_file = r'E:\python_workfile\polar_project\FY3C_MWRI\lat_lon.h5'
 save_path = r'G:\\polor_project\\output_all\\micosoft_save\\FY-3C\\'
 # 如果运行中断，从哪个文件开始继续运行
-con_point = 0
+con_point = 1571
 # files =files[-350:]
 
 try:
