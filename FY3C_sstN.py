@@ -5,9 +5,9 @@ import os
 import re
 import datetime
 from netCDF4 import Dataset
-coin_point = 947
+coin_point = 0
 satellite = r'FY3C'
-sensor = r'VIRRD'
+sensor = r'VIRRN'
 parameter = r'SST'
 resolution = r'25KM'
 if sensor == 'VIRRD':
@@ -19,7 +19,6 @@ elif sensor == 'VIRRN':
 
 files.sort()
 # 如果运行中断，从哪个文件开始继续运行
-con_point = 0
 
 try:
     os.mkdir(save_path + 'pic')
