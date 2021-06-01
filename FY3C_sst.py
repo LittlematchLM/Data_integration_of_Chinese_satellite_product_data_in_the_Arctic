@@ -11,11 +11,11 @@ sensor = r'VIRRD'
 parameter = r'SST'
 resolution = r'25KM'
 if sensor == 'VIRRD':
-    files = glob.glob(r'G:\sst\FY-3C\D\*\*.HDF')
-    save_path = r'G:\\polor_project\\output_all\\sst\\FY3C_VIRR\\DAY\\'
+    files = glob.glob(r'H:\sst\FY-3C\D\*\*.HDF')
+    save_path = r'H:\\polor_project\\output_all\\sst\\FY3C_VIRR\\DAY\\'
 elif sensor == 'VIRRN':
-    files = glob.glob(r'G:\sst\FY-3C\N\*\*.HDF')
-    save_path = r'G:\\polor_project\\output_all\\sst\\FY3C_VIRR\\NIGHT\\'
+    files = glob.glob(r'H:\sst\FY-3C\N\*\*.HDF')
+    save_path = r'H:\\polor_project\\output_all\\sst\\FY3C_VIRR\\NIGHT\\'
 
 files.sort()
 # 如果运行中断，从哪个文件开始继续运行
@@ -105,7 +105,7 @@ for i,file in enumerate(files[coin_point:]):
         f.createDimension('y', grid_array_sub.shape[1])
         # 添加数据属性
         f.setncattr_string('satellite', satellite)
-        f.setncattr_string('sensor', sensor)
+        f.setncattr_string('sensor', 'VIRR')
         f.setncattr_string('data time', day)
         f.setncattr_string('data create time', datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S'))
         f.setncattr_string('projection mode', 'polar stereographic projection')

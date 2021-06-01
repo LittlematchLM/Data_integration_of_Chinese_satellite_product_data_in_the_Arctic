@@ -10,11 +10,11 @@ sensor = r'SCA'
 value = r'wind'
 resolution_n = r'25KM'
 # save_path =
-files = glob.glob(r"g:\\wind\\SCA\\*\\*\\*_dps_250_10_owv.h5")
+files = glob.glob(r"h:\\wind\\SCA\\*\\*\\*_dps_250_10_owv.h5")
 # files = files[6:7]
 
 
-hy_sca = HaiYangData(satellite=satellite, sensor=sensor,resolution=35000)
+hy_sca = HaiYangData(satellite=satellite, sensor=sensor,resolution=25000)
 
 # 将WGS 84坐标（4326）转化为极射投影
 crs = CRS.from_epsg(4326)
@@ -55,7 +55,7 @@ for files in file_list[:1]:
     # file = files[6]
 
     for file in files:
-        with Dataset(file, mode='r') as f:
+        with Dataset(files[9], mode='r') as f:
             date = f.getncattr('Equator_Crossing_Time').split('T')[0]
             lats = f.variables['wvc_lat'][:]
             lons = f.variables['wvc_lon'][:]
@@ -139,7 +139,7 @@ vwind = np.cos(np.radians(wind_dir)) * wind_speed
 # 专门用来画图的uwind和vwind
 wind_speed_one = np.full(shape=(wind_speed.shape),fill_value=10)
 uwind_draw = np.sin(np.radians(wind_dir)) * wind_speed_one
-vwind_draw = np.cos(np.radians(wind_dir)) * wind_speed_one'''
+vwind_draw = np.cos(np.radians(wind_dir)) * wind_speed_one
 
 uwind = np.sin(np.radians(grid_array_dir)) * grid_array
 vwind = np.cos(np.radians(grid_array_dir)) * grid_array
@@ -151,21 +151,21 @@ vwind_draw = np.cos(np.radians(grid_array_dir_one)) * grid_array
 
 
 uwind_draw[np.where(np.isnan(uwind_draw))] =0
-vwind_draw[np.where(np.isnan(vwind_draw))] =0
+vwind_draw[np.where(np.isnan(vwind_draw))] =0'''
 
 
 plt.figure(figsize=(9, 9))
 hy_m = Basemap(projection='npaeqd', boundinglat=60, lon_0=0, resolution='c')
 # 用原始的lons，lats画图
-hy_m.pcolormesh(lons, lats, data=wind_speed, cmap=plt.cm.jet,vmax = 24 ,vmin=0,latlon = True)
-hy_m.quiver(lons[::10,::10], lats[::10,::10], uwind_draw[::10,::10],vwind_draw[::10,::10], units='width',scale_units='width',color='black',latlon = True)
+# hy_m.pcolormesh(lons, lats, data=wind_speed, cmap=plt.cm.jet,vmax = 24 ,vmin=0,latlon = True)
+# hy_m.quiver(lons[::10,::10], lats[::10,::10], uwind_draw[::10,::10],vwind_draw[::10,::10], units='width',scale_units='width',color='black',latlon = True)
 # 用投影出来的grid画图
-# hy_m.pcolormesh(x_map, y_map, data=grid_array, cmap=plt.cm.jet,vmax = 24 ,vmin=0,latlon = True)
-# hy_m.quiver(x_map[::10,::10], y_map[::10,::10], grid_array_udir[::10,::10],grid_array_vdir[::10,::10],units = 'y',color='black',latlon = True)
+hy_m.pcolormesh(x_map, y_map, data=grid_array, cmap=plt.get_cmap('rainbow'),vmax = 24 ,vmin=0,latlon = True)
+hy_m.quiver(x_map[::8,::8], y_map[::8,::8], grid_array_udir[::8,::8],grid_array_vdir[::8,::8],width=0.0021, scale=800,color='black',latlon = True)
 hy_m.colorbar(location='right')
 hy_m.fillcontinents()
 hy_m.drawmapboundary()
 hy_m.drawparallels(np.arange(-90., 120., 10.), labels=[1, 0, 0, 0])
 hy_m.drawmeridians(np.arange(-180., 180., 60.), labels=[0, 0, 0, 1])
+plt.savefig('wind_single_file')
 plt.show()
-
