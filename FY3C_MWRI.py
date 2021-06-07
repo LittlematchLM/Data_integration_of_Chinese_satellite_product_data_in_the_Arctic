@@ -103,7 +103,7 @@ for i,file in enumerate(files[con_point:]):
         icecon_north[:] = grid_array_sub
         icecon_north.setncattr_string('Dataset Name', 'Daily Sea ice concentration')
         icecon_north.setncattr_string('Datatype', 'int')
-        icecon_north.setncattr_string('valid_range','0-100')
+        icecon_north.setncattr_string('valid_range','0 to 100')
         icecon_north.setncattr_string('units', '%')
         icecon_north.setncattr_string('observation area', 'North of 60 N')
         icecon_north.setncattr_string('origin data product', 'MWRI_L2_SIC')

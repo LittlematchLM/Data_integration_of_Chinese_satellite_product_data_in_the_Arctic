@@ -6,6 +6,8 @@ import re
 import datetime
 from netCDF4 import Dataset
 import math
+import h5py
+import pandas as pd
 
 RE = 6378.273
 E2 = 0.006693883
@@ -26,14 +28,18 @@ def mapll(latitude, longitude):
     xy[:, :, 0] = RHO * np.sin(longitude)
     xy[:, :, 1] = -RHO * np.cos(longitude)
 
-
-
     return xy
-
+wind_file = r'H:\\wind\\SCA\\2019\\05\\H2B_OPER_SCA_L2B_OR_20190522T041609_20190522T060042_02818_dps_250_20_owv.h5'
 files = glob.glob(r'h:\sst\FY-3C\N\*\*.HDF')
+SIC_file = r'H:\\icecon\\micosoft\\FY-3C\\2017\\FY3C_MWRIX_GBAL_L2_SIC_MLT_PSG_20170104_POAD_012KM_MS.HDF'
+land_mask_file = r'E:\\python_workfile\\polar_project\\land_mask\\coast_12.hdf'
 
+with Dataset(wind_file, mode='r') as fh:
+    lons = fh.variables['wvc_lon'][:,10:-10]
+    lats = fh.variables['wvc_lat'][:,10:-10]
+    swh = fh.variables['wind_speed_selection'][:,10:-10]
 
-with Dataset(files[1000], mode='r') as fh:
+with Dataset(files[281], mode='r') as fh:
     left_top_lat = fh.getncattr('Left-Top X')
     right_top_lat = fh.getncattr('Right-Top X')
     left_bottom_lat = fh.getncattr('Left-Bottom X')
@@ -64,24 +70,34 @@ i = ((x + 3850 - 12.5 / 2.0) / 12.5).astype(np.int)
 k = ((y + 5350 - 12.5 / 2.0) / 12.5).astype(np.int)
 j = 896 - k
 
-i[i >= 896 ] =0
-j[i >= 896] =0
+i[i >= 608 ] =0
+j[i >= 608] =0
 i[i < 0  ] =0
 j[i < 0 ] =0
 
-i[j >= 608 ] =0
-j[j >= 608] =0
+i[j >= 896 ] =0
+j[j >= 896] =0
 i[j < 0  ] =0
 j[j < 0 ] =0
 
 
 grid_array = np.full(shape=(896,608), fill_value=np.nan)
-grid_array[i,j] = sst
+
+
+grid_array[j,i] = sst
 
 grid_array[grid_array < -2] = np.nan
 
 
-plt.imshow(grid_array, origin = 'lower')
+plt.imshow(grid_array, cmap=plt.cm.jet, vmin=0, vmax=30)
+plt.colorbar()
+plt.show()
+
+a = pd.read_csv(r'E:\python_workfile\polar_project\land_mask.csv')
+land_mask = np.array(a)
+
+
+plt.imshow(land_mask, cmap=plt.cm.jet)
 plt.colorbar()
 plt.show()
 

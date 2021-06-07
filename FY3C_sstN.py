@@ -5,7 +5,7 @@ import os
 import re
 import datetime
 from netCDF4 import Dataset
-coin_point = 0
+coin_point = 743
 satellite = r'FY3C'
 sensor = r'VIRRN'
 parameter = r'SST'
@@ -116,7 +116,7 @@ for i,file in enumerate(files[coin_point:]):
         sst_north.setncattr_string('Dataset Name', 'Daily Sea surface temperature')
         sst_north.setncattr_string('Datatype', 'float')
         sst_north.setncattr_string('units', 'degree')
-        sst_north.setncattr_string('valid_range', '-2,35')
+        sst_north.setncattr_string('valid_range', '-2 to 35')
         sst_north.setncattr_string('observation area', 'North of 60 N')
         sst_north.setncattr_string('origin data product', 'VIRR_L2_SST')
 

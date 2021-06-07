@@ -106,7 +106,7 @@ for i,files in enumerate(file_list):
 
         swh_north.setncattr_string('Dataset Name', 'Sea Wave Height')
         swh_north.setncattr_string('Datatype', 'float')
-        swh_north.setncattr_string('valid_range','0.5-20')
+        swh_north.setncattr_string('valid_range','0.5 to 20')
         swh_north.setncattr_string('units', 'm')
         swh_north.setncattr_string('observation area', 'North of 60 N')
         swh_north.setncattr_string('origin data product', 'H2B_OPER_GDR_2PC')
@@ -156,7 +156,7 @@ for i,files in enumerate(file_list):
         swh_north[:] = mean_grid_sub
         swh_north.setncattr_string('Dataset Name', 'Mean Sea Surface Height')
         swh_north.setncattr_string('Datatype', 'float')
-        swh_north.setncattr_string('valid_range','0.5-20')
+        swh_north.setncattr_string('valid_range','0.5 to 20')
         swh_north.setncattr_string('units', 'm')
         swh_north.setncattr_string('observation area', 'North of 60 N')
         swh_north.setncattr_string('origin data product', 'H2B_OPER_GDR_2PC')
