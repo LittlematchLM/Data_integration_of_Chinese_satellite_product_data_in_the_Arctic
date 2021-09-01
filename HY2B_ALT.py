@@ -8,12 +8,12 @@ sensor = r'ALT'
 value_swh = r'SWH'
 value_ssh = r'SSH'
 resolution_n = r'25KM'
-hyfiles = glob.glob(r'g:\HY-2B\ALT\*\*\*.nc')
+hyfiles = glob.glob(r'i:\HY-2B\ALT\*\*\*.nc')
 hyfiles.sort()
-save_path_swh = r'g:\\polor_project\\output_all\\swh\\HY-2B\\'
-save_path_ssh = r'g:\\polor_project\\output_all\\ssh\\HY-2B\\'
-hy_value = ['swh_ku','swh_c','mean_sea_surface','rain_flag','ice_flag','surface_type']
-hy_alt = HaiYangData(satellite=satellite, sensor=sensor,resolution=25000)
+save_path_swh = r'i:\\polor_project\\output_all\\swh\\HY-2B\\'
+save_path_ssh = r'i:\\polor_project\\output_all\\ssh\\HY-2B\\'
+hy_value = ['swh_ku', 'swh_c', 'mean_sea_surface', 'rain_flag', 'ice_flag', 'surface_type']
+hy_alt = HaiYangData(satellite=satellite, sensor=sensor, resolution=25000)
 
 file_list = []
 list = []
@@ -23,14 +23,14 @@ for i in range(len(hyfiles)):
         list.append(hyfiles[i])
         continue
 
-    if (hyfiles[i].split('\\')[-1].split('_')[-2].split('T')[0]) == (hyfiles[i-1].split('\\')[-1].split('_')[-2].split('T')[0]):
+    if (hyfiles[i].split('\\')[-1].split('_')[-2].split('T')[0]) == (
+    hyfiles[i - 1].split('\\')[-1].split('_')[-2].split('T')[0]):
         list.append(hyfiles[i])
     else:
         file_list.append(list)
         list = []
         list.append(hyfiles[i])
 file_list.append(list)
-
 
 # 将WGS 84坐标（4326）转化为极射投影
 crs = CRS.from_epsg(4326)
@@ -39,20 +39,20 @@ crs = CRS.from_proj4("+proj=latlon")
 crs = CRS.from_user_input(4326)
 crs2 = CRS(proj="aeqd")
 
-transformer = HaiYangData.set_transformer(crs,crs2)
-transformer_back = HaiYangData.set_transformer(crs2,crs)
+transformer = HaiYangData.set_transformer(crs, crs2)
+transformer_back = HaiYangData.set_transformer(crs2, crs)
 
+for i, files in enumerate(file_list):
+    day = files[0].split('\\')[-1].split('_')[-2].split('T')[0]
+    file_name_t = satellite + '_' + sensor + '_' + value_ssh + '_' + resolution_n + '_' + day
 
-for i,files in enumerate(file_list):
-    day =files[0].split('\\')[-1].split('_')[-2].split('T')[0]
-    file_name_t = satellite + '_' + sensor+'_' + value_ssh + '_' +resolution_n+'_'+ day
+    hy_ori_df = pd.DataFrame(np.column_stack((hy_alt.alt_from_nc_files(files=files, value=hy_value))),
+                             columns=['lon', 'lat', 'time'] + hy_value)
 
-    hy_ori_df = pd.DataFrame(np.column_stack((hy_alt.alt_from_nc_files(files = files, value=hy_value))), columns=['lon', 'lat', 'time']+hy_value)
-
-    # 删除无效点,只处理北纬66°以上的数据
+    # 删除无效点,只处理北纬60°以上的数据
     hy_fill_value = 32767
     hy_ori_df = hy_ori_df.drop(hy_ori_df[hy_ori_df.swh_ku > 500].index)
-    hy_ori_df = hy_alt.data_filter(hy_ori_df,'lat',66)
+    hy_ori_df = hy_alt.data_filter(hy_ori_df, 'lat', 60)
     hy_ori_df = hy_ori_df.drop(hy_ori_df[(hy_ori_df.rain_flag != 0)].index)
     hy_ori_df = hy_ori_df.drop(hy_ori_df[(hy_ori_df.ice_flag != 0)].index)
     hy_ori_df = hy_ori_df.drop(hy_ori_df[(hy_ori_df.surface_type == 2)].index)
@@ -61,8 +61,8 @@ for i,files in enumerate(file_list):
     hy_alt.add_proj(hy_ori_df, transformer)
 
     # 交叉点平均化
-    mean_grid,count_grid = hy_alt.coincident_point_mean(hy_ori_df,'swh_ku',get_count=True)
-    max_grid = hy_alt.coincident_point_max(hy_ori_df,'swh_ku')
+    mean_grid, count_grid = hy_alt.coincident_point_mean(hy_ori_df, 'swh_ku', get_count=True)
+    max_grid = hy_alt.coincident_point_max(hy_ori_df, 'swh_ku')
     min_grid = hy_alt.coincident_point_min(hy_ori_df, 'swh_ku')
 
     # # 计算平均每个格中落多少个点
@@ -71,27 +71,28 @@ for i,files in enumerate(file_list):
     hy_x_map, hy_y_map = hy_alt.get_map_grid(transformer_back)
 
     plt.figure(figsize=(16, 9))
-    hy_m = Basemap(projection='npaeqd', boundinglat=66, lon_0=0, resolution='c')
-    hy_m.pcolormesh(hy_x_map, hy_y_map, data=mean_grid, cmap=plt.cm.jet,vmin=0, vmax=5,latlon = True)
+    hy_m = Basemap(projection='npaeqd', boundinglat=60, lon_0=0, resolution='c')
+    hy_m.pcolormesh(hy_x_map, hy_y_map, data=mean_grid, cmap=plt.cm.jet, vmin=0, vmax=5, latlon=True)
     hy_m.colorbar(location='right')
     hy_m.fillcontinents()
     hy_m.drawmapboundary()
     hy_m.drawparallels(np.arange(-90., 120., 10.), labels=[1, 0, 0, 0])
     hy_m.drawmeridians(np.arange(-180., 180., 60.), labels=[0, 0, 0, 1])
-    plt.title(satellite +'_'+ sensor +'_'+ day)
+    plt.title(satellite + '_' + sensor + '_' + day)
     plt.savefig(save_path_swh + r'pic\\' + file_name_t + '.jpg')
     plt.close()
 
-    mean_grid_sub = np.hstack((mean_grid[:700,:600],mean_grid[:700,1200:]))
-    hy_x_map_sub = np.hstack((hy_x_map[:700,: 600],hy_x_map[:700, 1200:]))
-    hy_y_map_sub = np.hstack((hy_y_map[:700,: 600], hy_y_map[:700, 1200:]))
+    mean_grid_sub = np.hstack((mean_grid[:700, :600], mean_grid[:700, 1200:]))
+    hy_x_map_sub = np.hstack((hy_x_map[:700, : 600], hy_x_map[:700, 1200:]))
+    hy_y_map_sub = np.hstack((hy_y_map[:700, : 600], hy_y_map[:700, 1200:]))
     count_grid = np.hstack((count_grid[:700, : 600], count_grid[:700, 1200:]))
 
-    with Dataset(save_path_swh  + satellite + '_' + sensor+'_' + value_swh + '_' +resolution_n+'_'+ day + '.h5', 'w') as file:
+    with Dataset(save_path_swh + satellite + '_' + sensor + '_' + value_swh + '_' + resolution_n + '_' + day + '.h5',
+                 'w') as file:
         file.createDimension('x', mean_grid_sub.shape[0])
         file.createDimension('y', mean_grid_sub.shape[1])
         # 添加数据属性
-        file.setncattr_string('satellite',satellite)
+        file.setncattr_string('satellite', satellite)
         file.setncattr_string('sensor', sensor)
         file.setncattr_string('data time', day)
         file.setncattr_string('data create time', datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S'))
@@ -106,7 +107,7 @@ for i,files in enumerate(file_list):
 
         swh_north.setncattr_string('Dataset Name', 'Sea Wave Height')
         swh_north.setncattr_string('Datatype', 'float')
-        swh_north.setncattr_string('valid_range','0.5 to 20')
+        swh_north.setncattr_string('valid_range', '0.5 to 20')
         swh_north.setncattr_string('units', 'm')
         swh_north.setncattr_string('observation area', 'North of 60 N')
         swh_north.setncattr_string('origin data product', 'H2B_OPER_GDR_2PC')
@@ -115,35 +116,35 @@ for i,files in enumerate(file_list):
 
         lon[:] = hy_x_map_sub
         lat[:] = hy_y_map_sub
-    print(str(i+1) + '//' + str(len(file_list)))
-    print(satellite +'_'+ sensor +'_'+ day)
+    print(str(i + 1) + '//' + str(len(file_list)))
+    print(satellite + '_' + sensor + '_' + day)
 
     hy_ori_df = hy_ori_df.drop(hy_ori_df[hy_ori_df.mean_sea_surface > 500].index)
     # 交叉点平均化
-    mean_grid,count_grid = hy_alt.coincident_point_mean(hy_ori_df,'mean_sea_surface',get_count=True)
+    mean_grid, count_grid = hy_alt.coincident_point_mean(hy_ori_df, 'mean_sea_surface', get_count=True)
 
     plt.figure(figsize=(16, 9))
-    hy_m = Basemap(projection='npaeqd', boundinglat=66, lon_0=0, resolution='c')
-    hy_m.pcolormesh(hy_x_map, hy_y_map, data=mean_grid, cmap=plt.cm.jet,vmin=-15, vmax=60,latlon = True)
+    hy_m = Basemap(projection='npaeqd', boundinglat=60, lon_0=0, resolution='c')
+    hy_m.pcolormesh(hy_x_map, hy_y_map, data=mean_grid, cmap=plt.cm.jet, vmin=-15, vmax=60, latlon=True)
     hy_m.colorbar(location='right')
     hy_m.fillcontinents()
     hy_m.drawmapboundary()
     hy_m.drawparallels(np.arange(-90., 120., 10.), labels=[1, 0, 0, 0])
     hy_m.drawmeridians(np.arange(-180., 180., 60.), labels=[0, 0, 0, 1])
-    plt.title(satellite +'_'+ sensor +'_'+ day)
+    plt.title(satellite + '_' + sensor + '_' + day)
     plt.savefig(save_path_ssh + r'pic\\' + file_name_t + '.jpg')
     plt.close()
 
-
-    mean_grid_sub = np.hstack((mean_grid[:700,:600],mean_grid[:700,1200:]))
-    hy_x_map_sub = np.hstack((hy_x_map[:700,: 600],hy_x_map[:700, 1200:]))
-    hy_y_map_sub = np.hstack((hy_y_map[:700,: 600], hy_y_map[:700, 1200:]))
+    mean_grid_sub = np.hstack((mean_grid[:700, :600], mean_grid[:700, 1200:]))
+    hy_x_map_sub = np.hstack((hy_x_map[:700, : 600], hy_x_map[:700, 1200:]))
+    hy_y_map_sub = np.hstack((hy_y_map[:700, : 600], hy_y_map[:700, 1200:]))
     count_grid = np.hstack((count_grid[:700, : 600], count_grid[:700, 1200:]))
-    with Dataset(save_path_ssh  + satellite + '_' + sensor+'_' + value_ssh + '_' +resolution_n+'_'+ day + '.h5', 'w') as f:
+    with Dataset(save_path_ssh + satellite + '_' + sensor + '_' + value_ssh + '_' + resolution_n + '_' + day + '.h5',
+                 'w') as f:
         f.createDimension('x', mean_grid_sub.shape[0])
         f.createDimension('y', mean_grid_sub.shape[1])
         # 添加数据属性
-        f.setncattr_string('satellite',satellite)
+        f.setncattr_string('satellite', satellite)
         f.setncattr_string('sensor', sensor)
         f.setncattr_string('data time', day)
         f.setncattr_string('data create time', datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S'))
@@ -156,7 +157,7 @@ for i,files in enumerate(file_list):
         swh_north[:] = mean_grid_sub
         swh_north.setncattr_string('Dataset Name', 'Mean Sea Surface Height')
         swh_north.setncattr_string('Datatype', 'float')
-        swh_north.setncattr_string('valid_range','0.5 to 20')
+        swh_north.setncattr_string('valid_range', '0.5 to 20')
         swh_north.setncattr_string('units', 'm')
         swh_north.setncattr_string('observation area', 'North of 60 N')
         swh_north.setncattr_string('origin data product', 'H2B_OPER_GDR_2PC')
@@ -168,5 +169,5 @@ for i,files in enumerate(file_list):
         count_g = f.createVariable('count_grid', 'i4', dimensions=('x', 'y'))
         count_g[:] = count_grid
 
-    print(str(i+1) + '/' + str(len(file_list)))
-    print(satellite +'_'+ sensor +'_'+ day)
+    print(str(i + 1) + '/' + str(len(file_list)))
+    print(satellite + '_' + sensor + '_' + day)
