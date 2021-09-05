@@ -24,7 +24,7 @@ for i in range(len(hyfiles)):
         continue
 
     if (hyfiles[i].split('\\')[-1].split('_')[-2].split('T')[0]) == (
-    hyfiles[i - 1].split('\\')[-1].split('_')[-2].split('T')[0]):
+            hyfiles[i - 1].split('\\')[-1].split('_')[-2].split('T')[0]):
         list.append(hyfiles[i])
     else:
         file_list.append(list)
@@ -45,7 +45,7 @@ transformer_back = HaiYangData.set_transformer(crs2, crs)
 for i, files in enumerate(file_list):
     day = files[0].split('\\')[-1].split('_')[-2].split('T')[0]
     file_name_t = satellite + '_' + sensor + '_' + value_ssh + '_' + resolution_n + '_' + day
-
+    file_name_swh = satellite + '_' + sensor + '_' + value_swh + '_' + resolution_n + '_' + day
     hy_ori_df = pd.DataFrame(np.column_stack((hy_alt.alt_from_nc_files(files=files, value=hy_value))),
                              columns=['lon', 'lat', 'time'] + hy_value)
 
@@ -79,7 +79,7 @@ for i, files in enumerate(file_list):
     hy_m.drawparallels(np.arange(-90., 120., 10.), labels=[1, 0, 0, 0])
     hy_m.drawmeridians(np.arange(-180., 180., 60.), labels=[0, 0, 0, 1])
     plt.title(satellite + '_' + sensor + '_' + day)
-    plt.savefig(save_path_swh + r'pic\\' + file_name_t + '.jpg')
+    plt.savefig(save_path_swh + r'pic\\' + file_name_swh + '.jpg')
     plt.close()
 
     mean_grid_sub = np.hstack((mean_grid[:700, :600], mean_grid[:700, 1200:]))
@@ -125,7 +125,7 @@ for i, files in enumerate(file_list):
 
     plt.figure(figsize=(16, 9))
     hy_m = Basemap(projection='npaeqd', boundinglat=60, lon_0=0, resolution='c')
-    hy_m.pcolormesh(hy_x_map, hy_y_map, data=mean_grid, cmap=plt.cm.jet, vmin=-15, vmax=60, latlon=True)
+    hy_m.pcolormesh(hy_x_map, hy_y_map, data=mean_grid, cmap=plt.cm.jet, shading='auto', vmin=-15, vmax=60, latlon=True)
     hy_m.colorbar(location='right')
     hy_m.fillcontinents()
     hy_m.drawmapboundary()

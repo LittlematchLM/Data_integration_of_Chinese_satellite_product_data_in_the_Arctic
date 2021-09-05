@@ -11,9 +11,9 @@ resolution_n = r'25KM'
 files = glob.glob(r'i:\\icecon\\micosoft\\FY-3C\\*\\*.HDF')
 files.sort()
 latlon_file = r'E:\python_workfile\polar_project\FY3C_MWRI\lat_lon.h5'
-save_path = r'i:\\polor_project\\output_all\\micosoft_save\\FY-3C_test\\'
+save_path = r'i:\\polor_project\\output_all\\micosoft_save\\FY-3C\\'
 # 如果运行中断，从哪个文件开始继续运行
-con_point = 0
+con_point = 1380
 # files =files[-350:]
 
 try:
@@ -36,6 +36,13 @@ transformer_back = HaiYangData.set_transformer(crs2, crs)
 with Dataset(latlon_file, mode='r') as fh:
     lats = fh.variables['Latitude'][:]
     lons = fh.variables['Longitude'][:]
+projlats, projlons = transformer.transform(lats, lons)
+value_array = np.empty(shape=(lons.shape[0], lons.shape[1], 5))
+
+value_array[:, :, 0] = lats
+value_array[:, :, 1] = lons
+value_array[:, :, 2], value_array[:, :, 3] = transformer.transform(value_array[:, :, 0], value_array[:, :, 1])
+
 
 for i, file in enumerate(files[con_point:]):
     grid_array = np.zeros((fy_mwri.nlat, fy_mwri.nlon))
@@ -47,15 +54,13 @@ for i, file in enumerate(files[con_point:]):
             day = file.split('\\')[-1].split(r'_')[7]
     except OSError:
         print(file)
+
     file_name = satellite + '_' + sensor + '_' + value + '_' + resolution_n + '_' + day
 
-    projlats, projlons = transformer.transform(lats, lons)
-    value_array = np.empty(shape=(lons.shape[0], lons.shape[1], 5))
 
-    value_array[:, :, 0] = lats
-    value_array[:, :, 1] = lons
-    value_array[:, :, 2], value_array[:, :, 3] = transformer.transform(value_array[:, :, 0], value_array[:, :, 1])
     value_array[:, :, 4] = sic
+    value_array[:, :, 4][lats < 60] = 0
+
 
     x = (value_array[:, :, 2] / fy_mwri.resolution).astype(np.int)
     y = (value_array[:, :, 3] / fy_mwri.resolution).astype(np.int)
@@ -78,7 +83,6 @@ for i, file in enumerate(files[con_point:]):
     hy_m.drawparallels(np.arange(-90., 120., 10.), labels=[1, 0, 0, 0])
     hy_m.drawmeridians(np.arange(-180., 180., 60.), labels=[0, 0, 0, 1])
     plt.title(satellite + '_' + sensor + '_' + day)
-
     plt.savefig(save_path + r'\\pic\\' + file_name + '.jpg')
     plt.close()
     #   填充无数据点
@@ -87,7 +91,7 @@ for i, file in enumerate(files[con_point:]):
     grid_array_sub = np.hstack((grid_array[:700, :600], grid_array[:700, 1200:]))
     x_map_sub = np.hstack((x_map[:700, : 600], x_map[:700, 1200:]))
     y_map_sub = np.hstack((y_map[:700, : 600], y_map[:700, 1200:]))
-    with Dataset(save_path + file_name + 'all.h5', 'w') as f:
+    with Dataset(save_path + file_name + '.h5', 'w') as f:
         f.createDimension('x', grid_array_sub.shape[0])
         f.createDimension('y', grid_array_sub.shape[1])
         # 添加数据属性
@@ -96,7 +100,7 @@ for i, file in enumerate(files[con_point:]):
         f.setncattr_string('data time', day)
         f.setncattr_string('data create time', datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S'))
         f.setncattr_string('projection mode', 'polar stereographic projection')
-        f.setncattr_string('resolution', '50KM')
+        f.setncattr_string('resolution', '25KM')
         f.setncattr_string('data processing organization', 'Ocean University Of China')
 
         icecon_north = f.createVariable('SIC', 'i4', dimensions=('x', 'y'))

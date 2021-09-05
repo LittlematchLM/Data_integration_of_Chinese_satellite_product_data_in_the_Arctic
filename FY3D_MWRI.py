@@ -8,10 +8,10 @@ satellite = r'FY3D'
 sensor = r'MWRI'
 value = r'SIC'
 resolution_n = r'25KM'
-files = glob.glob(r'G:\\icecon\\micosoft\\FY-3D\\*\\*.HDF')
+files = glob.glob(r'i:\\icecon\\micosoft\\FY-3D\\*\\*.HDF')
 files.sort()
 latlon_file = r'E:\python_workfile\polar_project\FY3C_MWRI\lat_lon.h5'
-save_path = r'G:\\polor_project\\output_all\\micosoft_save\\FY-3D\\'
+save_path = r'i:\\polor_project\\output_all\\micosoft_save\\FY-3D\\'
 # 如果运行中断，从哪个文件开始继续运行
 con_point = 0
 try:
@@ -35,6 +35,13 @@ with Dataset(latlon_file, mode='r') as fh:
     lats = fh.variables['Latitude'][:]
     lons = fh.variables['Longitude'][:]
 
+projlats, projlons = transformer.transform(lats, lons)
+value_array = np.empty(shape=(lons.shape[0], lons.shape[1], 5))
+
+value_array[:, :, 0] = lats
+value_array[:, :, 1] = lons
+value_array[:, :, 2], value_array[:, :, 3] = transformer.transform(value_array[:, :, 0], value_array[:, :, 1])
+
 for i, file in enumerate(files[con_point:]):
     grid_array = np.zeros((fy_mwri.nlat, fy_mwri.nlon))
     grid_num_array = np.zeros((fy_mwri.nlat, fy_mwri.nlon))
@@ -47,13 +54,8 @@ for i, file in enumerate(files[con_point:]):
         print(file)
     file_name = satellite + '_' + sensor + '_' + value + '_' + resolution_n + '_' + day
 
-    projlats, projlons = transformer.transform(lats, lons)
-    value_array = np.empty(shape=(lons.shape[0], lons.shape[1], 5))
-
-    value_array[:, :, 0] = lats
-    value_array[:, :, 1] = lons
-    value_array[:, :, 2], value_array[:, :, 3] = transformer.transform(value_array[:, :, 0], value_array[:, :, 1])
     value_array[:, :, 4] = sic
+    value_array[:, :, 4][lats < 60] = 0
 
     x = (value_array[:, :, 2] / fy_mwri.resolution).astype(np.int)
     y = (value_array[:, :, 3] / fy_mwri.resolution).astype(np.int)
@@ -68,7 +70,7 @@ for i, file in enumerate(files[con_point:]):
     grid_array[grid_array == 0] = np.nan
 
     plt.figure(figsize=(16, 9))
-    hy_m = Basemap(projection='npaeqd', boundinglat=40, lon_0=0, resolution='c')
+    hy_m = Basemap(projection='npaeqd', boundinglat=60, lon_0=0, resolution='c')
     hy_m.pcolormesh(x_map, y_map, data=grid_array, cmap=plt.cm.jet, shading='auto', vmax=100, vmin=0, latlon=True)
     hy_m.colorbar(location='right')
     hy_m.fillcontinents()
